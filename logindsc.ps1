@@ -20,6 +20,7 @@ if ($group) {
            
 	        #choco install python3 -y
             choco install multipass -y
+	    choco install docker-desktop -y
             #Get-HNSNetwork | ? Name -Like "Default Switch" | Remove-HNSNetwork
             #Disable-WindowsOptionalFeature -FeatureName "Windows-Defender-ApplicationGuard" -Online 
 
