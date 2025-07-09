@@ -19,7 +19,7 @@ if ($group) {
             Write-Output "WSL installation and update complete. Preparing to restart for development environment setup."
            
 	        #choco install python3 -y
-            #choco install multipass -y
+            choco install multipass -y
             #Get-HNSNetwork | ? Name -Like "Default Switch" | Remove-HNSNetwork
             #Disable-WindowsOptionalFeature -FeatureName "Windows-Defender-ApplicationGuard" -Online 
 
