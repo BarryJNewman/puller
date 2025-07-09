@@ -37,7 +37,7 @@ if ($group) {
             msg $currentUserName "System will be rebooting in 10 seconds to finish Dev setup for $currentUserName. Please log back in to continue."
             Start-Sleep 10
 	    Remove-Item -Path 'C:\\Users\\Public\\Desktop\\*'
-            Restart-Computer -Force
+            #Restart-Computer -Force
             Write-Output "Restarting Computer, please log back in shortly to continue developer setup."
         } catch {
             Write-Error "Failed to add user '$currentUserName' to group '$groupName'. Error: $_"
