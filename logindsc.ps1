@@ -1,3 +1,44 @@
+# Lock‑Console.ps1 — dot‑source this at the top of your main script
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+
+public static class ConsoleGuard
+{
+    private const uint SC_CLOSE      = 0xF060;
+    private const uint MF_BYCOMMAND  = 0x00000000;
+
+    [DllImport("kernel32.dll")]  static extern IntPtr GetConsoleWindow();
+    [DllImport("user32.dll")]    static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+    [DllImport("user32.dll")]    static extern bool  DeleteMenu  (IntPtr hMenu, uint uPosition, uint uFlags);
+
+    [DllImport("kernel32.dll")]  static extern bool  SetConsoleCtrlHandler(IntPtr handler, bool add);
+
+    public static void Engage()
+    {
+        // 1) Remove the Close button and its context‑menu entry
+        IntPtr hwnd  = GetConsoleWindow();
+        if (hwnd != IntPtr.Zero)
+        {
+            IntPtr hMenu = GetSystemMenu(hwnd, false);
+            DeleteMenu(hMenu, SC_CLOSE, MF_BYCOMMAND);
+        }
+
+        // 2) Tell the console to ignore CTRL+C / CTRL+BREAK signals
+        SetConsoleCtrlHandler(IntPtr.Zero, true);
+    }
+
+    public static void Disengage()  // (optional) restore defaults
+    {
+        SetConsoleCtrlHandler(IntPtr.Zero, false);
+    }
+}
+"@
+
+[ConsoleGuard]::Engage   # ← window is now “un‑closable”
+
+# --- normal script work begins here --------------------------------
+Write‑Host "Initialising user environment … please wait."
 $ThemePath = "C:\Windows\Resources\Themes\avd-dark.theme"
 $CurrentTheme = (Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes").CurrentTheme
 $groupName = "docker-users"
@@ -47,3 +88,11 @@ if ($group) {
 } else {
     Write-Error "Group '$groupName' not found."
 }
+
+# …do whatever the task needs to do…
+Start‑Sleep 5            # demo only
+Write‑Host "Finished."
+# -------------------------------------------------------------------
+
+[ConsoleGuard]::Disengage # (restore CTRL+C behaviour if you wish)
+Read‑Host "Press <Enter> to exit"
