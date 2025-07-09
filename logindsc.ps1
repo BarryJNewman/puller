@@ -3,7 +3,7 @@ $CurrentTheme = (Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\Curren
 $groupName = "docker-users"
 $currentUserName = [System.Environment]::UserName
 $group = Get-LocalGroup -Name $groupName -ErrorAction SilentlyContinue
-
+msg $currentUserName "$currentUserName."
 if ($group) {
     $isMember = Get-LocalGroupMember -Group $groupName -Member "AzureAD\$currentUserName" -ErrorAction SilentlyContinue
     if ($isMember) {
