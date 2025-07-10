@@ -40,17 +40,17 @@ if (-not ('ConsoleGuard' -as [type])) {
 [ConsoleGuard]::Engage()
 
 # IDEMPOTENCE CHECK
-$AlreadyDone = $false
-try {
-    if (Test-Path $FlagRegPath) {
-        $ver = (Get-ItemProperty $FlagRegPath -Name Version -ErrorAction SilentlyContinue).Version
-        $AlreadyDone = ($ver -ge $ScriptVersion)
-    }
-} catch {}
-if ($AlreadyDone) {
-    Write-Host "Dev setup (version $ver) already applied. Nothing to do."
-    exit 0
-}
+# $AlreadyDone = $false
+# try {
+#     if (Test-Path $FlagRegPath) {
+#         $ver = (Get-ItemProperty $FlagRegPath -Name Version -ErrorAction SilentlyContinue).Version
+#         $AlreadyDone = ($ver -ge $ScriptVersion)
+#     }
+# } catch {}
+# if ($AlreadyDone) {
+#     Write-Host "Dev setup (version $ver) already applied. Nothing to do."
+#     exit 0
+# }
 Write-Host "Initialising developer environment – please wait.`n"
 
 # LOGGING FUNCTION
@@ -98,7 +98,7 @@ try {
 
     # RESTART‑APPS SETTING
     Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon' `
-                     -Name RestartApps -Value 1 -Type DWord
+                     -Name RestartApps -Value 0 -Type DWord
     Write-Event "Enabled Restart Apps at sign-in."
 
     # CLEAN PUBLIC DESKTOP
@@ -119,7 +119,7 @@ try {
         }
     } catch {}
     Start-Sleep 10
-    Restart-Computer -Force
+    #Restart-Computer -Force
 }
 catch {
     Write-Event "Dev setup FAILED: $_" 1003 'Error'
