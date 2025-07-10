@@ -1,21 +1,19 @@
 <#
 .SYNOPSIS
     One-shot developer-workstation bootstrap with locked console and dark mode.
-
 .NOTES
-    - Tested on Windows 10/11 Pro
-    - Requires administrator the first time (task creation)
-    - Chocolatey must be installed, or comment that section
+    - Works on Windows 10/11 Pro
+    - Requires admin for the scheduled task creation
+    - Chocolatey must be installed (or comment out choco installs)
 #>
 
 # CONFIGURATION
-$ScriptVersion = 2
+$ScriptVersion = 3
 $FlagRegPath   = 'HKLM:\Software\DevSetup'
-$ThemeFile     = 'C:\Windows\Resources\Themes\avd-dark.theme'
 $GroupName     = 'docker-users'
 $ChocoPkgs     = @('multipass', 'docker-desktop')
 
-# LOCK CONSOLE
+# LOCK CONSOLE (removes X, disables Ctrl+C/Break)
 if (-not ('ConsoleGuard' -as [type])) {
     Add-Type @"
     using System;
@@ -55,7 +53,7 @@ if ($AlreadyDone) {
 }
 Write-Host "Initialising developer environment – please wait.`n"
 
-# LOGGING
+# LOGGING FUNCTION
 function Write-Event([string]$Message,[int]$EventId=1001,[string]$EntryType='Information'){
     Write-Host $Message
     try {
@@ -68,19 +66,12 @@ if (-not ([System.Diagnostics.EventLog]::SourceExists('DevSetup'))) {
 }
 
 try {
-    # DARK MODE (both system & apps)
-    $RegPathSys  = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
-    if (!(Test-Path $RegPathSys)) { New-Item -Path $RegPathSys -Force | Out-Null }
-    Set-ItemProperty -Path $RegPathSys -Name AppsUseLightTheme   -Value 0 -Type DWord
-    Set-ItemProperty -Path $RegPathSys -Name SystemUsesLightTheme -Value 0 -Type DWord
+    # WINDOWS DARK MODE (System + Apps)
+    $regPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
+    if (!(Test-Path $regPath)) { New-Item -Path $regPath -Force | Out-Null }
+    Set-ItemProperty -Path $regPath -Name AppsUseLightTheme -Value 0 -Type DWord
+    Set-ItemProperty -Path $regPath -Name SystemUsesLightTheme -Value 0 -Type DWord
     Write-Event "Set Windows dark mode (apps + system)."
-
-    # THEME
-    $currentTheme = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes').CurrentTheme
-    if ($currentTheme -ne $ThemeFile -and (Test-Path $ThemeFile)) {
-        Start-Process -FilePath $ThemeFile -Wait
-        Write-Event "Applied dark AVD theme."
-    }
 
     # GROUP MEMBERSHIP
     if (Get-LocalGroup -Name $GroupName -ErrorAction SilentlyContinue) {
@@ -107,7 +98,7 @@ try {
 
     # RESTART‑APPS SETTING
     Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon' `
-                     -Name RestartApps -Value 0 -Type DWord
+                     -Name RestartApps -Value 1 -Type DWord
     Write-Event "Enabled Restart Apps at sign-in."
 
     # CLEAN PUBLIC DESKTOP
@@ -118,8 +109,15 @@ try {
     Set-ItemProperty -Path $FlagRegPath -Name Version -Value $ScriptVersion
     Write-Event "Dev setup complete (version $ScriptVersion). Rebooting…"
 
-    # NOTIFY USER & REBOOT
-    msg * "System will reboot in 10 seconds to finish developer setup."
+    # NOTIFY USER & REBOOT (only if interactive session is present)
+    try {
+        # Only send msg if interactive session exists, otherwise ignore errors
+        $sessionId = (Get-Process -Id $PID).SessionId
+        $username = $env:USERNAME
+        if ($username -and $sessionId -gt 0) {
+            msg $username "System will reboot in 10 seconds to finish developer setup." 2>$null
+        }
+    } catch {}
     Start-Sleep 10
     Restart-Computer -Force
 }
