@@ -107,7 +107,7 @@ try {
 
     # RESTART‑APPS SETTING
     Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon' `
-                     -Name RestartApps -Value 1 -Type DWord
+                     -Name RestartApps -Value 0 -Type DWord
     Write-Event "Enabled Restart Apps at sign-in."
 
     # CLEAN PUBLIC DESKTOP
